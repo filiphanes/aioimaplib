@@ -203,6 +203,16 @@ class ImapProtocol(asyncio.Protocol):
         self.capabilities = capabilities
         self.state_to_send = list()
         self.delay_seconds = 0
+        if loop is None:
+            if sys.version_info < (3, 10):
+                self.loop = asyncio.get_event_loop()
+            else:
+                try:
+                    self.loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    self.loop = asyncio.new_event_loop()
+        else:
+            self.loop = loop
         self.fetch_chunk_size = fetch_chunk_size
         self.transport = None
         self.server_state = server_state
@@ -213,17 +223,6 @@ class ImapProtocol(asyncio.Protocol):
         self.state = NONAUTH
         self.state_condition = asyncio.Condition()
         self.append_literal_command = None
-        if loop is None:
-            self.loop = get_running_loop()
-            if sys.version_info < (3, 10):
-                self.loop = asyncio.get_event_loop()
-            else:
-                try:
-                    self.loop = asyncio.get_running_loop()
-                except RuntimeError:
-                    self.loop = asyncio.new_event_loop()
-        else:
-            self.loop = loop
 
     def connection_made(self, transport):
         self.transport = transport
